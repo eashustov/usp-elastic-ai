@@ -1,4 +1,4 @@
-package ru.sberbank.uspelasticai.model;
+package ru.sberbank.uspelasticai.elastic.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.springframework.data.annotation.Id;

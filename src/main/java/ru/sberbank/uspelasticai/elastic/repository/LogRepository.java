@@ -1,8 +1,8 @@
-package ru.sberbank.uspelasticai.repository;
+package ru.sberbank.uspelasticai.elastic.repository;
 
 import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;
 import org.springframework.stereotype.Repository;
-import ru.sberbank.uspelasticai.model.Log;
+import ru.sberbank.uspelasticai.elastic.model.Log;
 
 import java.util.List;
 

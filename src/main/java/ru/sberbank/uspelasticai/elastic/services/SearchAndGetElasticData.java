@@ -1,8 +1,6 @@
-package ru.sberbank.uspelasticai.services;
+package ru.sberbank.uspelasticai.elastic.services;
 
-import co.elastic.clients.json.JsonpUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.elasticsearch.action.search.*;
@@ -21,13 +19,12 @@ import org.springframework.data.elasticsearch.core.SearchHits;
 import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
 import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
 import org.springframework.data.elasticsearch.core.query.Query;
-import org.springframework.data.web.JsonPath;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import ru.sberbank.uspelasticai.model.Log;
-import ru.sberbank.uspelasticai.repository.LogRepository;
+import ru.sberbank.uspelasticai.elastic.model.Log;
+import ru.sberbank.uspelasticai.elastic.repository.LogRepository;
 
 import java.io.IOException;
 import java.util.*;
@@ -35,7 +32,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.elasticsearch.index.query.QueryBuilders.matchQuery;
-import static org.elasticsearch.index.query.QueryBuilders.termQuery;
+
 
 @RestController
 @RequestMapping("/rest/search")
@@ -155,7 +152,7 @@ public class SearchAndGetElasticData {
     @GetMapping(value = "/index/lastdata/{index}")
     private void getLastElastticSearcData(@PathVariable final String index) throws IOException {
         List<String> messageLog = new ArrayList<>();
-        Set<String> ips =new HashSet<>();
+        Set<String> ips = new HashSet<>();
         Map<String, List<String>> logsWithIPAndMessage = new HashMap<>();
         String SearchHit = null;
         org.elasticsearch.search.SearchHits hits = null;

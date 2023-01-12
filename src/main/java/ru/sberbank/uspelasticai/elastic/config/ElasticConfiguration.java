@@ -1,21 +1,17 @@
-package ru.sberbank.uspelasticai.config;
+package ru.sberbank.uspelasticai.elastic.config;
 
-import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.elasticsearch.client.ClientConfiguration;
 import org.springframework.data.elasticsearch.client.RestClients;
-import org.springframework.data.elasticsearch.client.elc.ElasticsearchConfiguration;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.ElasticsearchRestTemplate;
 import org.springframework.data.elasticsearch.repository.config.EnableElasticsearchRepositories;
 
 @Configuration
-@EnableElasticsearchRepositories(basePackages = "ru.sberbank.uspelasticai.repository")
+@EnableElasticsearchRepositories(basePackages = "ru.sberbank.uspelasticai.elastic.repository")
 @ComponentScan(basePackages = { "ru.sberbank.uspelasticai.*" })
 public class ElasticConfiguration {
 
