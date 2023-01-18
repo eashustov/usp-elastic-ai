@@ -28,6 +28,8 @@ import ru.sberbank.uspelasticai.elastic.repository.LogRepository;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -60,100 +62,101 @@ public class SearchAndGetElasticData {
 //    ElasticsearchRestTemplate elasticsearchRestTemplate;
 
 
-//    @GetMapping(value = "/index/{index}")
+    //    @GetMapping(value = "/index/{index}")
     public List<Log> getLogDataByIndex(@PathVariable final String index) {
-            Query query = new NativeSearchQueryBuilder()
-                    .withQuery(matchQuery("index", index)) //"kibana_sample_data_logs"
+        Query query = new NativeSearchQueryBuilder()
+                .withQuery(matchQuery("index", index)) //"kibana_sample_data_logs"
 //                    .withSearchAfter(new Object[]{sortAfterValue})
-                    .withIds()
-                    .build();
-            SearchHits<Log> searchHits = elasticsearchTemplate.search(query, Log.class, IndexCoordinates.of(index));
+                .withIds()
+                .build();
+        SearchHits<Log> searchHits = elasticsearchTemplate.search(query, Log.class, IndexCoordinates.of(index));
 
 //        System.out.println(searchHits.getTotalHits());
 
-            return searchHits.get().map(SearchHit::getContent).collect(Collectors.toList());
-        }
+        return searchHits.get().map(SearchHit::getContent).collect(Collectors.toList());
+    }
 
-        @GetMapping(value = "/index/{index}")
-        public void getScrollDataByIndex() throws IOException {
-            final Scroll scroll = new Scroll(TimeValue.timeValueMinutes(1L));
-            SearchRequest searchRequest = new SearchRequest("kibana_sample_data_logs");
-            searchRequest.scroll(scroll);
-            SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-            searchSourceBuilder
-                    .query(matchQuery("index", "kibana_sample_data_logs"))
-                    .searchAfter();
-            searchRequest.source(searchSourceBuilder);
+    @GetMapping(value = "/index/{index}")
+    public void getScrollDataByIndex() throws IOException {
+        final Scroll scroll = new Scroll(TimeValue.timeValueMinutes(1L));
+        SearchRequest searchRequest = new SearchRequest("kibana_sample_data_logs");
+        searchRequest.scroll(scroll);
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+        searchSourceBuilder
+                .query(matchQuery("index", "kibana_sample_data_logs"))
+                .searchAfter();
+        searchRequest.source(searchSourceBuilder);
 
-                SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+        SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
 //                searchResponse.getHits().getAt(lastIndex).getSortValues();
-                String scrollId = searchResponse.getScrollId();
-                org.elasticsearch.search.SearchHit[] searchHits = searchResponse.getHits().getHits();
+        String scrollId = searchResponse.getScrollId();
+        org.elasticsearch.search.SearchHit[] searchHits = searchResponse.getHits().getHits();
 
-                while (searchHits != null && searchHits.length > 0) {
+        while (searchHits != null && searchHits.length > 0) {
 
-                    SearchScrollRequest scrollRequest = new SearchScrollRequest(scrollId);
-                    scrollRequest.scroll(scroll);
-                    searchResponse = client.scroll(scrollRequest, RequestOptions.DEFAULT);
-                    scrollId = searchResponse.getScrollId();
+            SearchScrollRequest scrollRequest = new SearchScrollRequest(scrollId);
+            scrollRequest.scroll(scroll);
+            searchResponse = client.scroll(scrollRequest, RequestOptions.DEFAULT);
+            scrollId = searchResponse.getScrollId();
 //                    searchResponse.getHits().getAt(lastIndex).getSortValues();
-                    searchHits = searchResponse.getHits().getHits();
-                    System.out.println(searchHits.toString());
-                }
-
-
-            ClearScrollRequest clearScrollRequest = new ClearScrollRequest();
-            clearScrollRequest.addScrollId(scrollId);
-            ClearScrollResponse clearScrollResponse = client.clearScroll(clearScrollRequest, RequestOptions.DEFAULT);
-            boolean succeeded = clearScrollResponse.isSucceeded();
-            System.out.println(succeeded);
-
+            searchHits = searchResponse.getHits().getHits();
+            System.out.println(searchHits.toString());
         }
 
-        @GetMapping(value = "/index/last_id/{index}")
-        private String getLastElastticSearchId(@PathVariable final String index) throws IOException {
+
+        ClearScrollRequest clearScrollRequest = new ClearScrollRequest();
+        clearScrollRequest.addScrollId(scrollId);
+        ClearScrollResponse clearScrollResponse = client.clearScroll(clearScrollRequest, RequestOptions.DEFAULT);
+        boolean succeeded = clearScrollResponse.isSucceeded();
+        System.out.println(succeeded);
+
+    }
+
+    @GetMapping(value = "/index/last_id/{index}")
+    private String getLastElastticSearchId(@PathVariable final String index) throws IOException {
 //        RestHighLevelClient client = getElasticSearchClient();
-            String SearchHit = null;
-            SearchRequest searchRequest = new SearchRequest(index);
-            SearchSourceBuilder b = new SearchSourceBuilder();
-            b.query(QueryBuilders.matchAllQuery());
+        String SearchHit = null;
+        SearchRequest searchRequest = new SearchRequest(index);
+        SearchSourceBuilder b = new SearchSourceBuilder();
+        b.query(QueryBuilders.matchAllQuery());
 //            b.searchAfter(new Object[]{SearchHit});
-            b.sort(new FieldSortBuilder("_id").order(SortOrder.DESC));
-            b.from(0);
-            b.size(1);
-            searchRequest.source(b);
+        b.sort(new FieldSortBuilder("_id").order(SortOrder.DESC));
+        b.from(0);
+        b.size(1);
+        searchRequest.source(b);
 
 //            String SearchHit = null;
-            try {
+        try {
 
-                SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
-                org.elasticsearch.search.SearchHits hits = searchResponse.getHits();
+            SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+            org.elasticsearch.search.SearchHits hits = searchResponse.getHits();
 
-                if (hits.getTotalHits().value > 0) {
-                    org.elasticsearch.search.SearchHit[] searchHits = hits.getHits();
-                    for (org.elasticsearch.search.SearchHit hit : searchHits) {
-                        SearchHit = hit.getId();
+            if (hits.getTotalHits().value > 0) {
+                org.elasticsearch.search.SearchHit[] searchHits = hits.getHits();
+                for (org.elasticsearch.search.SearchHit hit : searchHits) {
+                    SearchHit = hit.getId();
 //                        SearchHit = hit.getDocumentFields().get("timestamp").getValue();
 //                    return hit.getId();
 //                        searchResponse.getHits().getAt(Integer.parseInt(SearchHit)).getSortValues();
-                        return SearchHit;
-                    }
+                    return SearchHit;
                 }
-
-            } catch (IOException e) {
-                e.printStackTrace();
-            } finally {
-                client.close();
-                return SearchHit;
-
             }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            client.close();
+            return SearchHit;
+
         }
+    }
 
     @GetMapping(value = "/index/lastdata/{index}")
     private void getLastElastticSearcData(@PathVariable final String index) throws IOException {
         List<String> messageLog = new ArrayList<>();
         Set<String> ips = new HashSet<>();
         Map<String, List<String>> logsWithIPAndMessage = new HashMap<>();
+        BlockingQueue<Map<String, List<String>>> logsQueue = new LinkedBlockingDeque<>();
         String SearchHit = null;
         org.elasticsearch.search.SearchHits hits = null;
         SearchRequest searchRequest = new SearchRequest(index);
@@ -162,8 +165,10 @@ public class SearchAndGetElasticData {
 //            b.searchAfter(new Object[]{SearchHit});
         b.sort(new FieldSortBuilder("_id").order(SortOrder.DESC));
         b.from(0);
-        b.size(100);
+        b.size(10000);
         searchRequest.source(b);
+
+//        new Thread(new LogBlockingQueue(logsQueue,logsWithIPAndMessage)).start();
 
         try {
 
@@ -203,18 +208,33 @@ public class SearchAndGetElasticData {
                 for (Log log : Logs) {
                     ips.add(log.getIp());
                 }
+                System.out.println(ips);
                 ips.forEach(i -> {
                     List<String> listMessages = new ArrayList<>();
                     listMessages = Logs.stream()
                             .filter(e -> e.getIp().equals(i))
+                            .filter(e->!e.getMessage().equals(""))
                             .map(e -> e.getMessage())
                             .collect(Collectors.toList());
 
-                    logsWithIPAndMessage.put(i, listMessages);
+                    if (listMessages.size()!=0) {
+                        logsWithIPAndMessage.put(i, listMessages);
+
+                        try {
+                            logsQueue.put(logsWithIPAndMessage);
+
+                            System.out.println("Сообщения из очереди: " + logsQueue.take());
+                            logsWithIPAndMessage.clear();
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
                 });
 
-                System.out.println(logsWithIPAndMessage);
-                logsWithIPAndMessage.clear();
+//                System.out.println(logsWithIPAndMessage);
+//                logsQueue.put(logsWithIPAndMessage);
+//                logsWithIPAndMessage.clear();
+//                System.out.println("Сообщения из очереди: " + logsQueue.take());
                 messageLog.clear();
             }
 

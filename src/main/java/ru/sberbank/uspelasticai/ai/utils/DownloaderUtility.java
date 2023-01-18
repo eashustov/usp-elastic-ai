@@ -17,7 +17,7 @@
  * SPDX-License-Identifier: Apache-2.0
  ******************************************************************************/
 
-package ru.sberbank.uspelasticai.ai;
+package ru.sberbank.uspelasticai.ai.utils;
 
 import org.apache.commons.io.FilenameUtils;
 import org.nd4j.common.resources.Downloader;

@@ -30,6 +30,7 @@ import org.deeplearning4j.text.tokenization.tokenizerfactory.DefaultTokenizerFac
 import org.deeplearning4j.text.tokenization.tokenizerfactory.TokenizerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import ru.sberbank.uspelasticai.ai.utils.DownloaderUtility;
 
 import java.io.File;
 
@@ -99,6 +100,9 @@ public class ParagraphVectorsTextExample {
 
             Note that docs are indexed from 0
          */
+
+        double similarity0 = vec.similarity("DOC_3456", "DOC_2590");
+        log.info("Error in Mozilla, OK. Connection established - similarity: " + similarity0);
 
         double similarity1 = vec.similarity("DOC_9835", "DOC_12492");
         log.info("9836/12493 ('This is my house .'/'This is my world .') similarity: " + similarity1);
