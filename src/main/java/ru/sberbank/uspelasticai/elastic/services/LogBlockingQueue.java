@@ -1,31 +1,21 @@
 package ru.sberbank.uspelasticai.elastic.services;
 
+
+import org.springframework.stereotype.Component;
+
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.LinkedBlockingDeque;
 
-public class LogBlockingQueue implements Runnable{
+@Component
+public class LogBlockingQueue{
 
-    public BlockingQueue<Map<String, List<String>>> logsQueue;
-    public Map<String, List<String>> logsWithIPAndMessage;
+    public static ArrayBlockingQueue<Map<String, List<String>>> logsQueue = new ArrayBlockingQueue<>(10);
 
-    public LogBlockingQueue(BlockingQueue<Map<String, List<String>>> logsQueue, Map<String, List<String>> logsWithIPAndMessage) {
-        this.logsQueue = logsQueue;
-        this.logsWithIPAndMessage = logsWithIPAndMessage;
+    public LogBlockingQueue() {
+//        this.logsQueue = new LinkedBlockingDeque<>();
     }
 
-    @Override
-    public void run() {
-
-            while (true) {
-                try {
-                    TimeUnit.SECONDS.sleep(10);
-                    logsQueue.put(logsWithIPAndMessage);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-
-    }
 }

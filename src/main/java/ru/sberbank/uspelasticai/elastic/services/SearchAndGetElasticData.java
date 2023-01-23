@@ -28,8 +28,6 @@ import ru.sberbank.uspelasticai.elastic.repository.LogRepository;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -48,6 +46,11 @@ public class SearchAndGetElasticData {
 
     @Autowired
     private RestHighLevelClient client;
+    @Autowired
+    public static LogBlockingQueue logBlockingQueue;
+
+
+//    public static BlockingQueue<Map<String, List<String>>> logsQueue = new LinkedBlockingDeque<>();
 
 
 //    @Autowired
@@ -156,7 +159,7 @@ public class SearchAndGetElasticData {
         List<String> messageLog = new ArrayList<>();
         Set<String> ips = new HashSet<>();
         Map<String, List<String>> logsWithIPAndMessage = new HashMap<>();
-        BlockingQueue<Map<String, List<String>>> logsQueue = new LinkedBlockingDeque<>();
+//        BlockingQueue<Map<String, List<String>>> logsQueue = new LinkedBlockingDeque<>();
         String SearchHit = null;
         org.elasticsearch.search.SearchHits hits = null;
         SearchRequest searchRequest = new SearchRequest(index);
@@ -208,7 +211,7 @@ public class SearchAndGetElasticData {
                 for (Log log : Logs) {
                     ips.add(log.getIp());
                 }
-                System.out.println(ips);
+//                System.out.println(ips);
                 ips.forEach(i -> {
                     List<String> listMessages = new ArrayList<>();
                     listMessages = Logs.stream()
@@ -221,9 +224,13 @@ public class SearchAndGetElasticData {
                         logsWithIPAndMessage.put(i, listMessages);
 
                         try {
-                            logsQueue.put(logsWithIPAndMessage);
 
-                            System.out.println("Сообщения из очереди: " + logsQueue.take());
+                                logBlockingQueue.logsQueue.put(logsWithIPAndMessage);
+
+//                            System.out.println("Очередь 1" + logBlockingQueue.logsQueue.hashCode());
+//                                System.out.println("Сообщения из очереди 1: " + logBlockingQueue.logsQueue);
+                                System.out.println("Размер очереди" + logBlockingQueue.logsQueue.size());
+
                             logsWithIPAndMessage.clear();
                         } catch (InterruptedException e) {
                             e.printStackTrace();
