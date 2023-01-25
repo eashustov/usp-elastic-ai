@@ -138,46 +138,75 @@ public class TestLogs extends JFrame {
         pack();
     }// </editor-fold>
 
-    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt){
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {
+        while(true){
+            synchronized (LogBlockingQueue.class) {
 //        DataSet testNews = prepareTestData(jTextArea1.getText());
-        DataSet testNews = null;
-        try {
-
+            try {
+                Thread.sleep(10);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            DataSet testNews = null;
+            try {
+//                synchronized (LogBlockingQueue.class) {
 //                System.out.println("Очередь 2" + logBlockingQueue.logsQueue.hashCode());
-                System.out.println("Размер очереди" + logBlockingQueue.logsQueue.size());
-                System.out.println("Сообщение из очереди 2" + logBlockingQueue.logsQueue.peek());
-                jTextArea1.setText(logBlockingQueue.logsQueue.peek().toString());
+                    System.out.println("Размер очереди 2: " + logBlockingQueue.logsQueue.size());
+//                    System.out.println("Содержимое очереди: " + logBlockingQueue.logsQueue);
+                    System.out.println("Сообщение из очереди 2: " + logBlockingQueue.logsQueue.peek());
+//                jTextArea1.setText(logBlockingQueue.logsQueue.peek().toString());
 //            System.out.println("Сообщение из очереди" + SearchAndGetElasticData.logsQueue.take().toString());
-                testNews = prepareTestData(logBlockingQueue.logsQueue.take().toString());
+                    System.out.println("Чтение из очереди 2");
+                    testNews = prepareTestData(logBlockingQueue.logsQueue.take().toString());
+//                    if (logBlockingQueue.logsQueue.size() ==0) {
+//                        LogBlockingQueue.class.wait();
+//                    }
+//                    LogBlockingQueue.class.notify();
+//                }
 
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        INDArray fet = testNews.getFeatures();
-        INDArray predicted = net.output(fet, false);
-        long[] arrsiz = predicted.shape();
+//            } catch (InterruptedException e) {
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            INDArray fet = testNews.getFeatures();
+            try {
+                INDArray predicted = net.output(fet, false);
+                long[] arrsiz = predicted.shape();
 
-        File categories = new File(dataLocalPath, "LabelledNews/categories.txt");
+            File categories = new File(dataLocalPath, "LabelledNews/categories.txt");
 
-        double max = 0;
-        int pos = 0;
-        for (int i = 0; i < arrsiz[1]; i++) {
-            if (max < (double) predicted.slice(0).getRow(i).sumNumber()) {
-                max = (double) predicted.slice(0).getRow(i).sumNumber();
-                pos = i;
+            double max = 0;
+            int pos = 0;
+            for (int i = 0; i < arrsiz[1]; i++) {
+                if (max < (double) predicted.slice(0).getRow(i).sumNumber()) {
+                    max = (double) predicted.slice(0).getRow(i).sumNumber();
+                    pos = i;
+                }
+            }
+
+            try (BufferedReader brCategories = new BufferedReader(new FileReader(categories))) {
+                String temp;
+                List<String> labels = new ArrayList<>();
+                while ((temp = brCategories.readLine()) != null) {
+                    labels.add(temp);
+                }
+                brCategories.close();
+//                jLabel3.setText(labels.get(pos).split(",")[1]);
+                System.out.println("Категория сообщения: " + labels.get(pos).split(",")[1]);
+            } catch (Exception e) {
+                System.out.println("File Exception : " + e.getMessage());
+            }
+            } catch (IllegalArgumentException e) {
+                System.out.println("Exception : " + e.getMessage());
             }
         }
+            if (logBlockingQueue.logsQueue.size() ==0) {
 
-        try (BufferedReader brCategories = new BufferedReader(new FileReader(categories))) {
-            String temp;
-            List<String> labels = new ArrayList<>();
-            while ((temp = brCategories.readLine()) != null) {
-                labels.add(temp);
-            }
-            brCategories.close();
-            jLabel3.setText(labels.get(pos).split(",")[1]);
-        } catch (Exception e) {
-            System.out.println("File Exception : " + e.getMessage());
+//                    LogBlockingQueue.class.wait();
+                    LogBlockingQueue.class.notify();
+
+            } //else LogBlockingQueue.class.notify();
+//
         }
     }
 
@@ -243,8 +272,12 @@ public class TestLogs extends JFrame {
             }
             int idx = category[i];
             int lastIdx = Math.min(tokens.size(), maxLength);
-            labels.putScalar(new int[]{i, idx, lastIdx - 1}, 1.0);
-            labelsMask.putScalar(new int[]{i, lastIdx - 1}, 1.0);
+            try {
+                labels.putScalar(new int[]{i, idx, lastIdx - 1}, 1.0);
+                labelsMask.putScalar(new int[]{i, lastIdx - 1}, 1.0);
+            } catch (IndexOutOfBoundsException e) {
+                System.out.println("Exception : " + e.getMessage());
+            }
         }
 
         return new DataSet(features, labels, featuresMask, labelsMask);

@@ -12,7 +12,7 @@ import java.util.concurrent.LinkedBlockingDeque;
 @Component
 public class LogBlockingQueue{
 
-    public static ArrayBlockingQueue<Map<String, List<String>>> logsQueue = new ArrayBlockingQueue<>(10);
+    public static ArrayBlockingQueue<Map<String, List<String>>> logsQueue = new ArrayBlockingQueue<>(500);
 
     public LogBlockingQueue() {
 //        this.logsQueue = new LinkedBlockingDeque<>();

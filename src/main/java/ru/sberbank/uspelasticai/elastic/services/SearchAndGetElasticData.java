@@ -12,6 +12,7 @@ import org.elasticsearch.search.Scroll;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.sort.FieldSortBuilder;
 import org.elasticsearch.search.sort.SortOrder;
+import org.nd4j.linalg.cpu.nativecpu.buffer.BoolBuffer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.SearchHit;
@@ -168,7 +169,7 @@ public class SearchAndGetElasticData {
 //            b.searchAfter(new Object[]{SearchHit});
         b.sort(new FieldSortBuilder("_id").order(SortOrder.DESC));
         b.from(0);
-        b.size(10000);
+        b.size(500);
         searchRequest.source(b);
 
 //        new Thread(new LogBlockingQueue(logsQueue,logsWithIPAndMessage)).start();
@@ -180,7 +181,7 @@ public class SearchAndGetElasticData {
 
             while (true) {
                 List<Log> Logs = new ArrayList<>();
-                TimeUnit.SECONDS.sleep(10);
+                Thread.sleep(10);
                 if (hits.getTotalHits().value > 0) {
                     org.elasticsearch.search.SearchHit[] searchHits = hits.getHits();
                     for (org.elasticsearch.search.SearchHit hit : searchHits) {
@@ -201,12 +202,13 @@ public class SearchAndGetElasticData {
 //                        Log log = new ObjectMapper().readValue(hit.toString(), new TypeReference<Log>() {});
                         Logs.add(log);
                         messageLog.add(log.getMessage());
-//                        System.out.println(log.getMessage());
+                        System.out.println("Новое сообщение: " + log.getMessage());
                     } catch (JsonProcessingException e) {
                         e.printStackTrace();
                     }
 
                 });
+                logsWithIPAndMessage.clear();
 //                System.out.println(messageLog.toString());
                 for (Log log : Logs) {
                     ips.add(log.getIp());
@@ -224,14 +226,20 @@ public class SearchAndGetElasticData {
                         logsWithIPAndMessage.put(i, listMessages);
 
                         try {
+                            synchronized (LogBlockingQueue.class) {
+                                System.out.println("Добавление в очередь");
+                                logBlockingQueue.logsQueue.put(new HashMap<>(logsWithIPAndMessage));
+                                logsWithIPAndMessage.remove(i);
+//                                Boolean queueAdded = true;
+//                              System.out.println("Сообщения из очереди 1: " + logBlockingQueue.logsQueue);
+                                System.out.println("Размер очереди 1: " + logBlockingQueue.logsQueue.size());
+                                if (logBlockingQueue.logsQueue.size() == 500) {
+                                    LogBlockingQueue.class.wait();
 
-                                logBlockingQueue.logsQueue.put(logsWithIPAndMessage);
+                                } else LogBlockingQueue.class.notify();
+//                                LogBlockingQueue.class.notify();
+                            }
 
-//                            System.out.println("Очередь 1" + logBlockingQueue.logsQueue.hashCode());
-//                                System.out.println("Сообщения из очереди 1: " + logBlockingQueue.logsQueue);
-                                System.out.println("Размер очереди" + logBlockingQueue.logsQueue.size());
-
-                            logsWithIPAndMessage.clear();
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
